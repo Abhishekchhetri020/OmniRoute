@@ -21,7 +21,7 @@
  * providers constants) — never from ProviderDetailPageClient.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useNotificationStore } from "@/store/notificationStore";
 import { isClaudeCodeCompatibleProvider } from "@/shared/constants/providers";
@@ -33,6 +33,7 @@ import {
 import { normalizeCodexLimitPolicy, providerText } from "../providerPageHelpers";
 import { useProviderQuotaVisibility } from "./useProviderQuotaVisibility";
 import { useReorderByAvailability } from "./useReorderByAvailability";
+import { useCodexPaidCreditsToggle } from "./useCodexPaidCreditsToggle";
 import {
   useConnectionDeleteConfirm,
   type ConnectionDeleteConfirmState,
@@ -191,6 +192,7 @@ export interface UseProviderConnectionsReturn {
   // Connection fetch
   fetchConnections: () => Promise<void>;
   fetchProxyConfig: () => Promise<void>;
+  refreshProxyState: () => Promise<void>;
 
   // Single-connection handlers
   deleteConfirm: ConnectionDeleteConfirmState;
@@ -198,6 +200,7 @@ export interface UseProviderConnectionsReturn {
   handleToggleRateLimit: (connectionId: string, enabled: boolean) => Promise<void>;
   handleToggleQuotaVisibility: (connectionId: string, visible: boolean) => Promise<void>;
   handleToggleClaudeExtraUsage: (connectionId: string, enabled: boolean) => Promise<void>;
+  handleToggleCodexPaidCredits: (connectionId: string, enabled: boolean) => Promise<void>;
   handleToggleCodexLimit: (connectionId: string, field: string, enabled: boolean) => Promise<void>;
   handleToggleCliproxyapiMode: (connectionId: string, enabled: boolean) => Promise<void>;
   handleSetUpstreamProxyMode: (
@@ -293,6 +296,13 @@ export function useProviderConnections(
     Record<string, { proxy: any; level: string } | null>
   >({});
 
+  // Latest connections, readable from a stable callback without making that
+  // callback (and every consumer prop depending on it) change every fetch.
+  const connectionsRef = useRef<ConnectionRowConnection[]>(connections);
+  useEffect(() => {
+    connectionsRef.current = connections;
+  }, [connections]);
+
   // ── Upstream proxy routing state (native / CLIProxyAPI / Dario / fallback) ─
   const [upstreamProxyMode, setUpstreamProxyModeState] = useState<UpstreamProxyMode>("native");
   const [upstreamProxyFallbackBackend, setUpstreamProxyFallbackBackendState] =
@@ -312,6 +322,28 @@ export function useProviderConnections(
   const fetchProxyConfig = useCallback(async () => {
     const result = await loadProxyConfigData();
     if (result) setProxyConfig(result.config);
+  }, []);
+
+  /**
+   * Refresh every proxy view the page renders after a proxy assignment is
+   * written elsewhere (ProxyConfigModal saves/clears through
+   * `/api/settings/proxies/assignments`).
+   *
+   * Two independent sources back those views and BOTH must be re-read:
+   *  - `proxyConfig`   ← GET /api/settings/proxy          (provider-level chip)
+   *  - `connProxyMap`  ← GET /api/settings/proxy?resolve= (per-connection badges)
+   *
+   * The `connProxyMap` effect below is keyed on [loading, connections], and a
+   * proxy save changes neither, so without this callback the account-row
+   * badges keep showing pre-save state until a manual reload.
+   */
+  const refreshProxyState = useCallback(async () => {
+    const [configResult, map] = await Promise.all([
+      loadProxyConfigData(),
+      resolveConnectionProxies(connectionsRef.current),
+    ]);
+    if (configResult) setProxyConfig(configResult.config);
+    if (map) setConnProxyMap(map);
   }, []);
 
   const fetchConnections = useCallback(async () => {
@@ -515,6 +547,15 @@ export function useProviderConnections(
       );
     }
   };
+
+  // Codex paid-credits toggle — extracted to its own hook (see
+  // useCodexPaidCreditsToggle.ts) to keep this file under the file-size cap.
+  const { handleToggleCodexPaidCredits } = useCodexPaidCreditsToggle({
+    connections,
+    setConnections,
+    notify,
+    t,
+  });
 
   const handleToggleCodexLimit = async (connectionId: string, field: string, enabled: boolean) => {
     try {
@@ -1108,6 +1149,7 @@ export function useProviderConnections(
     // Fetch
     fetchConnections,
     fetchProxyConfig,
+    refreshProxyState,
 
     // Single-connection handlers
     deleteConfirm,
@@ -1115,6 +1157,7 @@ export function useProviderConnections(
     handleToggleRateLimit,
     handleToggleQuotaVisibility,
     handleToggleClaudeExtraUsage,
+    handleToggleCodexPaidCredits,
     handleToggleCodexLimit,
     handleToggleCliproxyapiMode,
     handleSetUpstreamProxyMode,

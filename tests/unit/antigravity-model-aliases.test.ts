@@ -33,10 +33,7 @@ const EXPECTED_37_FLASH_TIERS = [
   ["gemini-3.7-flash-low", "Gemini 3.7 Flash (Low)"],
 ] as const;
 
-const EXPECTED_FLASH_TIERS = [
-  ...EXPECTED_38_FLASH_TIERS,
-  ...EXPECTED_37_FLASH_TIERS,
-] as const;
+const EXPECTED_FLASH_TIERS = [...EXPECTED_38_FLASH_TIERS, ...EXPECTED_37_FLASH_TIERS] as const;
 
 const RETIRED_FLASH_IDS = [
   "gemini-3.6-flash-low",
@@ -77,6 +74,10 @@ test("resolveAntigravityModelId maps the documented Antigravity aliases to upstr
   }
   assert.equal(resolveAntigravityModelId("gemini-3.7-flash"), "gemini-3.7-flash-tiered");
   assert.equal(resolveAntigravityModelId("gemini-3.7-flash-tiered"), "gemini-3.7-flash-tiered");
+  assert.equal(resolveAntigravityModelId("gemini-3.8-flash"), "gemini-3.8-flash-high");
+  assert.equal(resolveAntigravityModelId("gemini-3.8-flash-high"), "gemini-3.8-flash-high");
+  assert.equal(resolveAntigravityModelId("gemini-3.8-flash-medium"), "gemini-3.8-flash-medium");
+  assert.equal(resolveAntigravityModelId("gemini-3.8-flash-low"), "gemini-3.8-flash-low");
   assert.equal(resolveAntigravityModelId("gpt-oss-120b"), "gpt-oss-120b-medium");
   assert.equal(resolveAntigravityModelId("gemini-claude-sonnet-4-5"), "claude-sonnet-4-6");
   assert.equal(resolveAntigravityModelId("gemini-claude-sonnet-4-5-thinking"), "claude-sonnet-4-6");

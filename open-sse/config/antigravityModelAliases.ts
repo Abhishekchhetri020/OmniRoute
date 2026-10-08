@@ -6,13 +6,17 @@ export const ANTIGRAVITY_PUBLIC_MODELS = buildSurfaceCatalog(ANTIGRAVITY_SHARED_
 });
 
 export const ANTIGRAVITY_MODEL_ALIASES = Object.freeze({
-  "gemini-3.8-flash": "gemini-3.8-flash-high",
   // Gemini 3.7 Flash tiers map to the upstream tiered endpoint model; the thinking
   // budget is steered via generationConfig.thinkingConfig.thinkingBudget.
   "gemini-3.7-flash": "gemini-3.7-flash-tiered",
   "gemini-3.7-flash-high": "gemini-3.7-flash-tiered",
   "gemini-3.7-flash-medium": "gemini-3.7-flash-tiered",
   "gemini-3.7-flash-low": "gemini-3.7-flash-tiered",
+  // Gemini 3.8 Flash tiers are served DIRECTLY by the live Cloud Code upstream
+  // (v1internal:streamGenerateContent) at their own tier ids — unlike 3.7, there is no
+  // shared "-tiered" endpoint for 3.8. -high/-medium/-low are accepted verbatim; only
+  // the bare display id needs a default-tier alias.
+  "gemini-3.8-flash": "gemini-3.8-flash-high",
   "gpt-oss-120b": "gpt-oss-120b-medium",
   // gemini-3.1-pro-low is not aliased: the upstream accepts it verbatim.
   // gemini-3.1-pro-high: the discovery slot returns HTTP 400 on v1internal;
@@ -77,6 +81,13 @@ const ANTIGRAVITY_NON_CHAT_MODEL_IDS = new Set([
   "gemini-2.5-flash-preview-tts",
   "tab_flash_lite_preview",
   "tab_jump_flash_lite_preview",
+]);
+
+// Non-chat models that still expose user-facing quota buckets. Keep these out of
+// chat discovery while allowing Provider Limits to surface their live quota.
+const ANTIGRAVITY_QUOTA_VISIBLE_NON_CHAT_MODEL_IDS = new Set([
+  "gemini-3-pro-image-preview",
+  "gemini-3.1-flash-image",
 ]);
 
 const ANTIGRAVITY_RETIRED_MODEL_IDS = new Set([
@@ -158,4 +169,18 @@ export function isDiscoverableAntigravityModelId(modelId: string): boolean {
     return false;
   }
   return !ANTIGRAVITY_NON_CHAT_MODEL_PATTERN.test(id);
+}
+
+/**
+ * Return whether an Antigravity model quota should be visible to users. Quota
+ * visibility is intentionally broader than chat discovery: image-only models
+ * are callable through /v1/images/generations and have their own live quota
+ * buckets, but must remain excluded from the chat model catalog.
+ */
+export function isUserVisibleAntigravityQuotaModelId(modelId: string): boolean {
+  const id = modelId.trim();
+  if (!id) return false;
+  return (
+    isDiscoverableAntigravityModelId(id) || ANTIGRAVITY_QUOTA_VISIBLE_NON_CHAT_MODEL_IDS.has(id)
+  );
 }
