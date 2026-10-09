@@ -5,12 +5,14 @@
 // explicit add/remove delta in its own file (currently both deltas are empty).
 
 export const ANTIGRAVITY_SHARED_MODELS = Object.freeze([
-  // Gemini 3.8 Flash tiers. Unlike 3.7, Google's live Cloud Code endpoint
-  // (streamGenerateContent) serves 3.8 directly at the -high/-medium/-low tier
-  // ids — there is no gemini-3.8-flash-tiered upstream endpoint for 3.8.
+  // liveCatalogIds (#15659): a tiered-only account's live catalog lists `gemini-<ver>-flash-tiered`
+  // and none of the -high/-medium/-low ids, so without this the authoritative live-catalog check
+  // refuses every tier display id. The tier ids stay routable through the `-tiered` upstream id.
+  // Gemini 3.8 Flash tiers — listed ahead of 3.7 (newest live tier first).
   {
     id: "gemini-3.8-flash-high",
     name: "Gemini 3.8 Flash (High)",
+    liveCatalogIds: ["gemini-3.8-flash-tiered"],
     contextLength: 1048576,
     maxOutputTokens: 65536,
     supportsReasoning: true,
@@ -20,6 +22,7 @@ export const ANTIGRAVITY_SHARED_MODELS = Object.freeze([
   {
     id: "gemini-3.8-flash-medium",
     name: "Gemini 3.8 Flash (Medium)",
+    liveCatalogIds: ["gemini-3.8-flash-tiered"],
     contextLength: 1048576,
     maxOutputTokens: 65536,
     supportsReasoning: true,
@@ -29,6 +32,7 @@ export const ANTIGRAVITY_SHARED_MODELS = Object.freeze([
   {
     id: "gemini-3.8-flash-low",
     name: "Gemini 3.8 Flash (Low)",
+    liveCatalogIds: ["gemini-3.8-flash-tiered"],
     contextLength: 1048576,
     maxOutputTokens: 65536,
     supportsReasoning: true,
@@ -40,6 +44,7 @@ export const ANTIGRAVITY_SHARED_MODELS = Object.freeze([
   {
     id: "gemini-3.7-flash-high",
     name: "Gemini 3.7 Flash (High)",
+    liveCatalogIds: ["gemini-3.7-flash-tiered"],
     contextLength: 1048576,
     maxOutputTokens: 65536,
     supportsReasoning: true,
@@ -49,6 +54,7 @@ export const ANTIGRAVITY_SHARED_MODELS = Object.freeze([
   {
     id: "gemini-3.7-flash-medium",
     name: "Gemini 3.7 Flash (Medium)",
+    liveCatalogIds: ["gemini-3.7-flash-tiered"],
     contextLength: 1048576,
     maxOutputTokens: 65536,
     supportsReasoning: true,
@@ -58,6 +64,7 @@ export const ANTIGRAVITY_SHARED_MODELS = Object.freeze([
   {
     id: "gemini-3.7-flash-low",
     name: "Gemini 3.7 Flash (Low)",
+    liveCatalogIds: ["gemini-3.7-flash-tiered"],
     contextLength: 1048576,
     maxOutputTokens: 65536,
     supportsReasoning: true,
