@@ -141,10 +141,9 @@ describe("ensureAntigravityProjectAssigned", () => {
 
     await ensureAntigravityProjectAssigned("cli-token", mockFetch, "cli");
 
-    // #12499: the captured CLI fallback moved 1.1.5 -> 1.1.24 (live Cloud Code 404s older clients).
     assert.match(
       capturedHeaders?.get("User-Agent") || "",
-      /^antigravity\/cli\/1\.1\.24 \(aidev_client; os_type=.+; arch=.+; auth_method=consumer\)$/
+      /^antigravity\/cli\/1\.3\.4 \(aidev_client; os_type=.+; arch=.+; auth_method=consumer\)$/
     );
     assert.equal(capturedHeaders?.get("X-Goog-Api-Client"), null);
     assert.equal(capturedHeaders?.get("Client-Metadata"), null);
@@ -159,7 +158,6 @@ describe("ensureAntigravityProjectAssigned", () => {
 
     await ensureAntigravityProjectAssigned("ide-token", mockFetch);
 
-    // #12499: the captured IDE fallback moved 2.1.1 -> 2.5.5 (live Cloud Code 404s IDE 2.1.1).
     assert.match(capturedHeaders?.get("User-Agent") || "", /^antigravity\/ide\/2\.5\.5 /);
     assert.equal(capturedHeaders?.get("X-Goog-Api-Client"), null);
     assert.equal(capturedHeaders?.get("Client-Metadata"), null);
